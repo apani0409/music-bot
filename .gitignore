@@ -1,0 +1,76 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Environment variables (keep example files)
+.env
+.env.*
+!.env.example
+
+# Build / output
+dist/
+build/
+out/
+lib/
+*.tsbuildinfo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# PM2 and runtime
+pm2.log
+pids/
+*.pid
+
+# Secrets / keys
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+credentials.json
+secrets.json
+
+# Testing / cache
+coverage/
+.cache/
+
+# Swap / temp
+*.swp
+*.swo
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# Build output
+dist/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+.cache/
