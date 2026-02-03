@@ -14,7 +14,7 @@ import {
   AudioResource,
 } from '@discordjs/voice';
 import { VoiceBasedChannel } from 'discord.js';
-import ytdl from '@distube/ytdl-core';
+import { spawn } from 'child_process';
 import { Track } from '../types';
 import { queueManager } from './queue-manager';
 import { rateLimitHandler } from '../utils/rate-limit';
@@ -163,7 +163,7 @@ export class MusicPlayer {
   }
 
   /**
-   * Create audio resource from URL with optimization
+   * Create audio resource from URL using yt-dlp
    */
   private async createAudioResource(url: string): Promise<AudioResource> {
     if (!url) {
@@ -175,18 +175,48 @@ export class MusicPlayer {
     try {
       console.log(`[Music Player] Creating stream for URL: ${url}`);
 
-      // Get audio stream using @distube/ytdl-core (maintained fork)
-      // This handles YouTube authentication and audio extraction automatically
-      const stream = ytdl(url, {
-        quality: 'lowestaudio',
-        filter: 'audioonly',
-      });
+      // Use yt-dlp to get audio stream
+      // yt-dlp handles YouTube decryption and auth tokens automatically
+      return new Promise((resolve, reject) => {
+        const proc = spawn('yt-dlp', [
+          '-f', 'bestaudio[ext=m4a]/bestaudio',
+          '-o', '-',
+          '--no-warnings',
+          '--no-playlist',
+          '-q',
+          url,
+        ]);
 
-      console.log(`[Music Player] Got stream, creating audio resource`);
+        let hasError = false;
 
-      // Create audio resource from the stream
-      return createAudioResource(stream, {
-        inlineVolume: true,
+        proc.stderr.on('data', (data) => {
+          const msg = data.toString();
+          if (msg.includes('ERROR') || msg.includes('error')) {
+            hasError = true;
+            console.error('[Music Player] yt-dlp stderr:', msg);
+          }
+        });
+
+        proc.on('error', (err) => {
+          console.error('[Music Player] yt-dlp spawn error:', err);
+          reject(err);
+        });
+
+        proc.on('exit', (code) => {
+          if (code !== 0 && !hasError) {
+            reject(new Error(`yt-dlp exited with code ${code}`));
+          }
+        });
+
+        try {
+          console.log(`[Music Player] Got yt-dlp stream, creating audio resource`);
+          const resource = createAudioResource(proc.stdout as any, {
+            inlineVolume: true,
+          });
+          resolve(resource);
+        } catch (err) {
+          reject(err);
+        }
       });
     } catch (error) {
       console.error('[Music Player] Error creating audio resource:', error);
